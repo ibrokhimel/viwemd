@@ -1,11 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
-import {
-  FilesystemItem,
-  type FilesystemNode,
-} from "./filesystem-item";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useReducedMotion } from "framer-motion";
+import { FilesystemItem, type FilesystemNode } from "./filesystem-item";
 import { AppIconStyleProvider } from "./AppIconStyle";
+
+vi.mock("framer-motion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("framer-motion")>();
+  return { ...actual, useReducedMotion: vi.fn() };
+});
+
+const mockedUseReducedMotion = vi.mocked(useReducedMotion);
 
 const docsNode: FilesystemNode = {
   kind: "directory",
@@ -21,17 +26,15 @@ const docsNode: FilesystemNode = {
 };
 
 describe("FilesystemItem", () => {
+  beforeEach(() => mockedUseReducedMotion.mockReturnValue(false));
+
   it("expands an uncontrolled folder and opens its file", async () => {
     const user = userEvent.setup();
     const onOpenFile = vi.fn();
 
     render(
       <ul role="tree">
-        <FilesystemItem
-          node={docsNode}
-          animated
-          onOpenFile={onOpenFile}
-        />
+        <FilesystemItem node={docsNode} animated onOpenFile={onOpenFile} />
       </ul>,
     );
 
@@ -69,9 +72,7 @@ describe("FilesystemItem", () => {
       </ul>,
     );
 
-    expect(
-      screen.getByRole("button", { name: "Open guide.md" }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Open guide.md" })).toBeVisible();
   });
 
   it("supports the supplied name-and-nodes data shape", () => {
@@ -81,9 +82,7 @@ describe("FilesystemItem", () => {
       </ul>,
     );
 
-    expect(
-      screen.getByRole("button", { name: "Expand Empty" }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Expand Empty" })).toBeVisible();
   });
 
   it("uses the shared Phosphor weight preference", () => {
@@ -111,6 +110,23 @@ describe("FilesystemItem", () => {
     expect(screen.getByTestId("folder-icon-docs")).toHaveAttribute(
       "data-icon-weight",
       "bold",
+    );
+  });
+
+  it("removes the folder transition when reduced motion is requested", async () => {
+    mockedUseReducedMotion.mockReturnValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <ul role="tree">
+        <FilesystemItem node={docsNode} animated />
+      </ul>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Expand docs" }));
+    expect(screen.getByRole("group")).toHaveAttribute(
+      "data-motion-duration",
+      "0",
     );
   });
 });

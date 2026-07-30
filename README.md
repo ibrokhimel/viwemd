@@ -4,7 +4,7 @@ A local-first, cross-platform Markdown workspace and renderer built with Tauri, 
 
 ## Current status
 
-The foundation workspace is operational: choose a local folder, browse its animated lazy-loading file tree, open multiple tabs, edit with CodeMirror, render a sanitized GitHub-flavored Markdown preview, switch among single-pane, side-by-side, and stacked layouts, and personalize the interface with persistent appearance controls.
+The desktop workspace is operational: choose a local folder, browse its animated lazy-loading file tree, open multiple tabs, edit with CodeMirror, render a sanitized GitHub-flavored Markdown preview, switch among single-pane, side-by-side, and stacked layouts, and personalize the premium shell with persistent appearance controls.
 
 Supported filename extensions are `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`, and `.mdwn`, matched without case sensitivity.
 
@@ -36,17 +36,19 @@ npm run tauri dev
 
 Viwemd uses TypeScript, Tailwind CSS through the Vite plugin, and a shadcn-compatible `components.json`. Reusable primitives live in `src/components/ui`, global styles live in `src/app/app.css`, and the `@/` alias resolves to `src/`. Keeping reusable UI in `src/components/ui` lets the shadcn CLI place and rewrite component imports consistently while feature folders remain focused on app behavior.
 
-The animated `FilesystemItem` primitive uses Lucide icons and Framer Motion. `WorkspaceExplorer` adapts real lazy-loaded local folder entries to that reusable component; the demo data is not bundled into the app, and no image assets are required.
+The animated `FilesystemItem` primitive uses Phosphor icons and Framer Motion. Outline and solid preferences are translated into consistent icon weights across the sidebar, tabs, document actions, layouts, and settings. `WorkspaceExplorer` adapts real lazy-loaded local folder entries to that reusable component; the demo data is not bundled into the app, and no image assets are required.
 
 ## Workspace controls
 
 - Open a folder from the Explorer and select Markdown files to open tabs.
 - Use Edit or Preview for a single pane, or choose Side by side or Stacked.
-- Toggle the Explorer with its activity-rail button or `Ctrl+B` / `Cmd+B`.
-- Save immediately from the document toolbar or with `Ctrl+S` / `Cmd+S`; otherwise a dirty document autosaves after 750 ms.
+- Toggle the integrated Explorer with the sidebar control or `Ctrl+B` / `Cmd+B`; a reveal action remains in the document header while it is hidden.
+- Save immediately from the document header or with `Ctrl+S` / `Cmd+S`; otherwise a dirty document autosaves after 750 ms.
 - If the file changed outside Viwemd, choose Reload disk to use that version or Overwrite disk to keep the editor version.
-- Open Appearance from the bottom of the activity rail to choose Light, Dark, or System theme; compact, comfortable, or spacious sidebar density; outline or solid icons; sans, serif, or mono document typography; and one of five named accent colors.
+- Open Appearance from the bottom of the integrated sidebar to choose Light, Dark, or System theme; compact, comfortable, or spacious sidebar density; outline or solid icons; sans, serif, or mono document typography; and one of five named accent colors.
 - Appearance choices and sidebar visibility stay on this device under the versioned `viwemd.appearance.v1` preference. System theme follows live operating-system changes, and Reset appearance restores all defaults.
+
+The neutral near-black dark theme and warm-light theme share the same inset pane geometry and low-contrast borders. Below 980 px, document view controls become icon-led; below 720 px, the Explorer becomes an overlay sheet and split documents stack vertically. Reduced-motion preferences remove nonessential interface and folder animations.
 
 Validate the project:
 

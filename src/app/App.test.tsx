@@ -195,9 +195,7 @@ describe("App", () => {
     const appearanceButton = screen.getByRole("button", { name: "Appearance" });
     await user.click(appearanceButton);
 
-    expect(
-      screen.getByRole("complementary", { name: "Appearance" }),
-    ).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Appearance" })).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Close appearance" }),
     ).toHaveFocus();
@@ -240,7 +238,7 @@ describe("App", () => {
     await user.click(screen.getByRole("checkbox", { name: "Show sidebar" }));
     await user.keyboard("{Escape}");
     expect(
-      screen.queryByRole("complementary", { name: "Appearance" }),
+      screen.queryByRole("dialog", { name: "Appearance" }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveFocus();
 

@@ -4,7 +4,7 @@ import { useState, type ReactElement } from "react";
 import { CaretRightIcon } from "@phosphor-icons/react/dist/csr/CaretRight";
 import { FileMdIcon } from "@phosphor-icons/react/dist/csr/FileMd";
 import { FolderIcon } from "@phosphor-icons/react/dist/csr/Folder";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useAppIconWeight } from "./AppIconStyle";
 
 export type FilesystemNode = {
@@ -37,6 +37,8 @@ export function FilesystemItem({
   const isControlled = typeof node.expanded === "boolean";
   const isOpen = isControlled ? (node.expanded ?? false) : localOpen;
   const iconWeight = useAppIconWeight(isDirectory && isOpen);
+  const prefersReducedMotion = useReducedMotion();
+  const motionDuration = prefersReducedMotion ? 0 : 0.4;
 
   const toggleDirectory = (): void => {
     if (!isControlled) {
@@ -63,7 +65,8 @@ export function FilesystemItem({
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+          transition={{ type: "spring", bounce: 0, duration: motionDuration }}
+          data-motion-duration={motionDuration}
           className="filesystem-children ml-3.5 flex flex-col overflow-hidden border-l pl-1.5"
         >
           {children}
@@ -93,7 +96,11 @@ export function FilesystemItem({
           {animated ? (
             <motion.span
               animate={{ rotate: isOpen ? 90 : 0 }}
-              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              transition={{
+                type: "spring",
+                bounce: 0,
+                duration: motionDuration,
+              }}
               className="flex shrink-0"
               aria-hidden="true"
             >
