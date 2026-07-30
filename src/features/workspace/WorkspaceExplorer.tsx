@@ -1,8 +1,10 @@
 import type { ReactElement } from "react";
+import { FolderOpenIcon } from "@phosphor-icons/react/dist/csr/FolderOpen";
 import {
   FilesystemItem,
   type FilesystemNode,
 } from "@/components/ui/filesystem-item";
+import { useAppIconWeight } from "@/components/ui/AppIconStyle";
 import type { WorkspacePort } from "../../platform/workspace/WorkspacePort";
 import type { WorkspaceEntry } from "../../platform/workspace/types";
 import { useWorkspace, type WorkspaceController } from "./useWorkspace";
@@ -10,7 +12,6 @@ import { useWorkspace, type WorkspaceController } from "./useWorkspace";
 interface WorkspaceExplorerProps {
   port: WorkspacePort;
   onOpenFile(path: string): void;
-  hidden?: boolean;
 }
 
 interface WorkspaceTreeProps {
@@ -76,20 +77,19 @@ function WorkspaceTree({
 export function WorkspaceExplorer({
   port,
   onOpenFile,
-  hidden = false,
 }: WorkspaceExplorerProps): ReactElement {
   const workspace = useWorkspace(port);
+  const iconWeight = useAppIconWeight();
   const rootName = workspace.rootPath
     ?.split(/[\\/]/)
     .filter(Boolean)
     .at(-1);
 
   return (
-    <aside
+    <section
       className="workspace-explorer"
       aria-label="Workspace explorer"
       aria-busy={workspace.status === "loading"}
-      hidden={hidden}
     >
       <header className="sidebar-header">
         <div>
@@ -103,7 +103,7 @@ export function WorkspaceExplorer({
           type="button"
           onClick={() => void workspace.chooseFolder()}
         >
-          <span aria-hidden="true">+</span>
+          <FolderOpenIcon weight={iconWeight} aria-hidden="true" />
           Open folder
         </button>
       </header>
@@ -134,6 +134,6 @@ export function WorkspaceExplorer({
           <p className="sidebar-empty">Open a local folder to browse Markdown.</p>
         </div>
       )}
-    </aside>
+    </section>
   );
 }
