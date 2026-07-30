@@ -4,7 +4,7 @@ A local-first, cross-platform Markdown workspace and renderer built with Tauri, 
 
 ## Current status
 
-The foundation workspace is operational: choose a local folder, lazily browse supported Markdown files, open multiple tabs, edit with CodeMirror, render a sanitized GitHub-flavored Markdown preview, and switch among single-pane, side-by-side, and stacked layouts.
+The foundation workspace is operational: choose a local folder, lazily browse supported Markdown files, open multiple tabs, edit with CodeMirror, render a sanitized GitHub-flavored Markdown preview, switch among single-pane, side-by-side, and stacked layouts, and personalize the interface with persistent appearance controls.
 
 Supported filename extensions are `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`, and `.mdwn`, matched without case sensitivity.
 
@@ -32,12 +32,13 @@ Run the native desktop app:
 npm run tauri dev
 ```
 
-## Foundation controls
+## Workspace controls
 
 - Open a folder from the Explorer and select Markdown files to open tabs.
 - Use Edit or Preview for a single pane, or choose Side by side or Stacked.
 - Toggle the Explorer with its activity-rail button or `Ctrl+B` / `Cmd+B`.
-- The interface follows the operating system light or dark preference. Persistent Light, Dark, and System choices plus typography, accent, density, and icon settings land in the appearance slice.
+- Open Appearance from the bottom of the activity rail to choose Light, Dark, or System theme; compact, comfortable, or spacious sidebar density; outline or solid icons; sans, serif, or mono document typography; and one of five named accent colors.
+- Appearance choices and sidebar visibility stay on this device under the versioned `viwemd.appearance.v1` preference. System theme follows live operating-system changes, and Reset appearance restores all defaults.
 
 Validate the project:
 
