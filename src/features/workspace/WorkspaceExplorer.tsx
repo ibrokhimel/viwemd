@@ -6,6 +6,7 @@ import { useWorkspace, type WorkspaceController } from "./useWorkspace";
 interface WorkspaceExplorerProps {
   port: WorkspacePort;
   onOpenFile(path: string): void;
+  hidden?: boolean;
 }
 
 interface WorkspaceTreeProps {
@@ -26,9 +27,18 @@ function WorkspaceTree({
       {entries.map((entry: WorkspaceEntry) => {
         if (entry.kind === "file") {
           return (
-            <div role="treeitem" key={entry.path}>
-              <button type="button" onClick={() => onOpenFile(entry.path)}>
-                Open {entry.name}
+            <div className="tree-item" role="treeitem" key={entry.path}>
+              <button
+                className="tree-row"
+                type="button"
+                aria-label={`Open ${entry.name}`}
+                title={entry.path}
+                onClick={() => onOpenFile(entry.path)}
+              >
+                <span className="tree-icon file-icon" aria-hidden="true">
+                  M
+                </span>
+                <span className="tree-name">{entry.name}</span>
               </button>
             </div>
           );
@@ -36,12 +46,26 @@ function WorkspaceTree({
 
         const isExpanded = controller.expandedDirectories.has(entry.path);
         return (
-          <div role="treeitem" aria-expanded={isExpanded} key={entry.path}>
+          <div
+            className="tree-item"
+            role="treeitem"
+            aria-expanded={isExpanded}
+            key={entry.path}
+          >
             <button
+              className="tree-row"
               type="button"
+              aria-label={`${isExpanded ? "Collapse" : "Expand"} ${entry.name}`}
+              title={entry.path}
               onClick={() => void controller.toggleDirectory(entry.path)}
             >
-              {isExpanded ? "Collapse" : "Expand"} {entry.name}
+              <span className="tree-disclosure" aria-hidden="true">
+                {isExpanded ? "⌄" : "›"}
+              </span>
+              <span className="tree-icon folder-icon" aria-hidden="true">
+                ▰
+              </span>
+              <span className="tree-name">{entry.name}</span>
             </button>
             {isExpanded ? (
               <div role="group">
@@ -62,29 +86,57 @@ function WorkspaceTree({
 export function WorkspaceExplorer({
   port,
   onOpenFile,
+  hidden = false,
 }: WorkspaceExplorerProps): ReactElement {
   const workspace = useWorkspace(port);
+  const rootName = workspace.rootPath
+    ?.split(/[\\/]/)
+    .filter(Boolean)
+    .at(-1);
 
   return (
     <aside
+      className="workspace-explorer"
       aria-label="Workspace explorer"
       aria-busy={workspace.status === "loading"}
+      hidden={hidden}
     >
-      <button type="button" onClick={() => void workspace.chooseFolder()}>
-        Open folder
-      </button>
+      <header className="sidebar-header">
+        <div>
+          <span className="sidebar-eyebrow">Explorer</span>
+          <strong title={workspace.rootPath ?? undefined}>
+            {rootName ?? "No folder open"}
+          </strong>
+        </div>
+        <button
+          className="open-folder-button"
+          type="button"
+          onClick={() => void workspace.chooseFolder()}
+        >
+          <span aria-hidden="true">＋</span>
+          Open folder
+        </button>
+      </header>
       {workspace.status === "loading" ? (
-        <p role="status">Loading workspace…</p>
+        <p className="sidebar-message" role="status">
+          Loading workspace…
+        </p>
       ) : null}
-      {workspace.error ? <p role="alert">{workspace.error}</p> : null}
-      <div role="tree" aria-label="Markdown files">
+      {workspace.error ? (
+        <p className="sidebar-message is-error" role="alert">
+          {workspace.error}
+        </p>
+      ) : null}
+      <div className="workspace-tree" role="tree" aria-label="Markdown files">
         {workspace.rootPath ? (
           <WorkspaceTree
             controller={workspace}
             directoryPath={workspace.rootPath}
             onOpenFile={onOpenFile}
           />
-        ) : null}
+        ) : (
+          <p className="sidebar-empty">Open a local folder to browse Markdown.</p>
+        )}
       </div>
     </aside>
   );
