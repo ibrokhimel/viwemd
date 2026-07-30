@@ -21,6 +21,11 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
+Object.defineProperty(window, "scrollTo", {
+  configurable: true,
+  value: vi.fn(),
+});
+
 class TestResizeObserver implements ResizeObserver {
   disconnect(): void {}
   observe(): void {}

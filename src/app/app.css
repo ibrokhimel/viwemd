@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root,
 :root[data-theme="light"] {
   color-scheme: light;
@@ -388,82 +390,33 @@ button:focus-visible,
   padding-top: 11px;
 }
 
-.tree-item[role="treeitem"] {
-  min-width: 0;
-}
-
-.tree-item [role="group"] {
-  margin-left: 13px;
-  padding-left: 6px;
-  border-left: 1px solid var(--border);
-}
-
-.tree-row {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-  gap: var(--tree-row-gap);
+.filesystem-row {
   padding: var(--tree-row-padding);
   border: 0;
-  border-radius: 7px;
   background: transparent;
+  color: var(--text);
   cursor: pointer;
-  text-align: left;
 }
 
-.tree-row:hover {
+.filesystem-row:hover {
   background: var(--hover);
 }
 
-.tree-disclosure {
-  width: 10px;
-  flex: 0 0 auto;
-  color: var(--subtle);
-  font-size: 1rem;
+.filesystem-children {
+  border-color: var(--border);
 }
 
-.tree-icon {
-  display: grid;
-  width: 17px;
-  height: 17px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 4px;
-  font-size: 0.58rem;
-  font-weight: 800;
-}
-
-.tree-icon.file-icon {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-:root[data-icon-style="outline"] .tree-icon {
-  border: 1px solid currentColor;
-  background: transparent;
-  font-weight: 650;
-}
-
-:root[data-icon-style="solid"] .tree-icon {
-  border: 0;
-  font-weight: 900;
-}
-
-:root[data-icon-style="solid"] .tree-icon.folder-icon {
-  background: color-mix(in srgb, #d6942c 18%, transparent);
-}
-
-.tree-icon.folder-icon {
-  color: #d6942c;
-}
-
-.tree-name {
-  overflow: hidden;
+.filesystem-name {
   color: var(--text);
   font-size: 0.75rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+:root[data-icon-style="outline"] .filesystem-folder-icon {
+  fill: transparent;
+}
+
+:root[data-icon-style="solid"] .filesystem-file-icon {
+  fill: currentColor;
 }
 
 .document-area {
