@@ -1,9 +1,12 @@
+import type { LineEnding } from "../../platform/workspace/types";
+
 export interface OpenDocument {
   id: string;
   path: string;
   name: string;
   source: string;
   persistedSource: string;
+  lineEnding: LineEnding;
   cursorOffset: number;
   editorScrollTop: number;
   previewScrollTop: number;

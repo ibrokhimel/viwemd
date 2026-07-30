@@ -48,6 +48,7 @@ export function useDocuments(port: WorkspacePort): DocumentsController {
             name: filenameFromPath(result.path),
             source: result.source,
             persistedSource: result.source,
+            lineEnding: result.lineEnding,
             cursorOffset: 0,
             editorScrollTop: 0,
             previewScrollTop: 0,

@@ -11,6 +11,7 @@ const readme: OpenDocument = {
   name: "README.md",
   source: "# Home",
   persistedSource: "# Home",
+  lineEnding: "lf",
   cursorOffset: 0,
   editorScrollTop: 0,
   previewScrollTop: 0,
@@ -23,6 +24,7 @@ const setup: OpenDocument = {
   name: "setup.md",
   source: "# Setup",
   persistedSource: "# Setup",
+  lineEnding: "lf",
 };
 
 const guide: OpenDocument = {
@@ -32,6 +34,7 @@ const guide: OpenDocument = {
   name: "guide.md",
   source: "# Guide",
   persistedSource: "# Guide",
+  lineEnding: "lf",
 };
 
 describe("documentReducer", () => {

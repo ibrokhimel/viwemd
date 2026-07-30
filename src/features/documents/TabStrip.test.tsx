@@ -10,6 +10,7 @@ const readme: OpenDocument = {
   name: "README.md",
   source: "# Home",
   persistedSource: "# Home",
+  lineEnding: "lf",
   cursorOffset: 0,
   editorScrollTop: 0,
   previewScrollTop: 0,
@@ -22,6 +23,7 @@ const dirtySetup: OpenDocument = {
   name: "setup.md",
   source: "# Edited setup",
   persistedSource: "# Setup",
+  lineEnding: "lf",
 };
 
 describe("TabStrip", () => {

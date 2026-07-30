@@ -48,6 +48,8 @@ describe("useDocuments", () => {
         if (path === "/notes/missing.md") throw new Error("Read failed");
         return source.readDocument(path);
       },
+      saveDocument: (request) => source.saveDocument(request),
+      watchDocument: (path, onChange) => source.watchDocument(path, onChange),
     };
     const { result } = renderHook(() => useDocuments(port));
 
