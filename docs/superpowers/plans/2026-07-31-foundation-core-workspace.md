@@ -133,7 +133,7 @@ Create `package.json` with these exact runtime versions and scripts; run `npm in
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri"
@@ -180,7 +180,7 @@ export default defineConfig({
 });
 ```
 
-Use strict application TypeScript settings in `tsconfig.json` and a composite Vite config in `tsconfig.node.json`:
+Use strict, no-emit TypeScript settings for both the application and Vite config:
 
 ```json
 {
@@ -201,19 +201,20 @@ Use strict application TypeScript settings in `tsconfig.json` and a composite Vi
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src"]
 }
 ```
 
 ```json
 {
   "compilerOptions": {
-    "composite": true,
+    "target": "ES2022",
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "noEmit": true,
+    "strict": true
   },
   "include": ["vite.config.ts"]
 }
