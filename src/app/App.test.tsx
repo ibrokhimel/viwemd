@@ -14,7 +14,16 @@ describe("App", () => {
 
     expect(screen.getByRole("main")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Viwemd" })).toBeVisible();
-    expect(screen.getByText("Local Markdown workspace")).toBeVisible();
+    expect(screen.getByText("Local workspace")).toBeVisible();
+    expect(
+      screen.getByRole("complementary", { name: "Viwemd sidebar" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("region", { name: "Workspace explorer" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("navigation", { name: "Activity rail" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open folder" })).toBeVisible();
   });
 
@@ -82,18 +91,19 @@ describe("App", () => {
     window.dispatchEvent(modifiedShortcut);
     expect(modifiedShortcut.defaultPrevented).toBe(false);
     expect(
-      screen.getByRole("complementary", { name: "Workspace explorer" }),
+      screen.getByRole("complementary", { name: "Viwemd sidebar" }),
     ).toBeVisible();
 
     await user.keyboard("{Control>}b{/Control}");
     expect(
-      screen.queryByRole("complementary", { name: "Workspace explorer" }),
+      screen.queryByRole("complementary", { name: "Viwemd sidebar" }),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show sidebar" })).toBeVisible();
     expect(screen.getByText("Local only")).toBeVisible();
 
     await user.keyboard("{Control>}b{/Control}");
     expect(
-      screen.getByRole("complementary", { name: "Workspace explorer" }),
+      screen.getByRole("complementary", { name: "Viwemd sidebar" }),
     ).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Open README.md" }),
@@ -193,7 +203,7 @@ describe("App", () => {
 
     await user.click(screen.getByRole("checkbox", { name: "Show sidebar" }));
     expect(
-      screen.queryByRole("complementary", { name: "Workspace explorer" }),
+      screen.queryByRole("complementary", { name: "Viwemd sidebar" }),
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Show sidebar" }));
@@ -206,7 +216,7 @@ describe("App", () => {
     expect(
       screen.queryByRole("complementary", { name: "Appearance" }),
     ).not.toBeInTheDocument();
-    expect(appearanceButton).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveFocus();
 
     await waitFor(() => {
       expect(localStorage.getItem("viwemd.appearance.v1")).toContain("blue");
@@ -216,14 +226,15 @@ describe("App", () => {
     render(<App workspacePort={workspacePort} />);
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");
     expect(
-      screen.queryByRole("complementary", { name: "Workspace explorer" }),
+      screen.queryByRole("complementary", { name: "Viwemd sidebar" }),
     ).not.toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Show sidebar" }));
     await user.click(screen.getByRole("button", { name: "Appearance" }));
     expect(screen.getByRole("radio", { name: "Blue" })).toBeChecked();
     expect(
       screen.getByRole("checkbox", { name: "Show sidebar" }),
-    ).not.toBeChecked();
+    ).toBeChecked();
 
     await user.click(screen.getByRole("button", { name: "Reset appearance" }));
     expect(document.documentElement).toHaveAttribute("data-theme", "light");
@@ -232,7 +243,7 @@ describe("App", () => {
       "comfortable",
     );
     expect(
-      screen.getByRole("complementary", { name: "Workspace explorer" }),
+      screen.getByRole("complementary", { name: "Viwemd sidebar" }),
     ).toBeVisible();
   });
 });

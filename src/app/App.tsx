@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type ReactElement,
+  type Ref,
 } from "react";
 import { AppearancePanel } from "../features/appearance/AppearancePanel";
 import { useAppearance } from "../features/appearance/useAppearance";
@@ -18,14 +19,41 @@ import {
   layoutReducer,
 } from "../features/layout/layoutState";
 import { MarkdownPreview } from "../features/preview/MarkdownPreview";
-import { WorkspaceExplorer } from "../features/workspace/WorkspaceExplorer";
-import { AppIconStyleProvider } from "../components/ui/AppIconStyle";
+import { PremiumSidebar } from "../features/workspace/PremiumSidebar";
+import {
+  AppIconStyleProvider,
+  useAppIconWeight,
+} from "../components/ui/AppIconStyle";
+import { SidebarSimpleIcon } from "@phosphor-icons/react/dist/csr/SidebarSimple";
 import { tauriWorkspacePort } from "../platform/workspace/tauriWorkspacePort";
 import type { WorkspacePort } from "../platform/workspace/WorkspacePort";
 import "./app.css";
 
 interface AppProps {
   workspacePort?: WorkspacePort;
+}
+
+function SidebarRevealButton({
+  onClick,
+  buttonRef,
+}: {
+  onClick(): void;
+  buttonRef?: Ref<HTMLButtonElement>;
+}): ReactElement {
+  const iconWeight = useAppIconWeight();
+
+  return (
+    <button
+      ref={buttonRef}
+      className="sidebar-reveal-button"
+      type="button"
+      aria-label="Show sidebar"
+      title="Show sidebar (Ctrl/Cmd+B)"
+      onClick={onClick}
+    >
+      <SidebarSimpleIcon weight={iconWeight} aria-hidden="true" />
+    </button>
+  );
 }
 
 export function App({
@@ -37,6 +65,7 @@ export function App({
   const toggleSidebar = appearance.toggleSidebar;
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const appearanceButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarRevealButtonRef = useRef<HTMLButtonElement>(null);
   const [layoutState, dispatchLayout] = useReducer(
     layoutReducer,
     initialLayoutState,
@@ -53,8 +82,12 @@ export function App({
 
   const closeAppearance = useCallback(() => {
     setAppearanceOpen(false);
-    appearanceButtonRef.current?.focus();
-  }, []);
+    if (appearance.preferences.sidebarVisible) {
+      appearanceButtonRef.current?.focus();
+    } else {
+      sidebarRevealButtonRef.current?.focus();
+    }
+  }, [appearance.preferences.sidebarVisible]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -124,88 +157,27 @@ export function App({
   return (
     <AppIconStyleProvider style={appearance.preferences.iconStyle}>
       <main className="app-shell">
-      <header className="titlebar">
-        <div className="app-identity">
-          <span className="app-mark" aria-hidden="true">
-            M↓
-          </span>
-          <div>
-            <h1>Viwemd</h1>
-            <p>Local Markdown workspace</p>
-          </div>
-        </div>
-        <div className="privacy-badge">
-          <span aria-hidden="true">●</span>
-          On-device
-        </div>
-      </header>
+        <div
+          className="app-body"
+          data-sidebar={
+            appearance.preferences.sidebarVisible ? "visible" : "hidden"
+          }
+        >
+          <PremiumSidebar
+            port={workspacePort}
+            onOpenFile={(path) => void documents.openPath(path)}
+            onHide={toggleSidebar}
+            onOpenAppearance={() => setAppearanceOpen((open) => !open)}
+            appearanceOpen={appearanceOpen}
+            appearanceButtonRef={appearanceButtonRef}
+            hidden={!appearance.preferences.sidebarVisible}
+          />
 
-      <div
-        className="app-body"
-        data-sidebar={
-          appearance.preferences.sidebarVisible ? "visible" : "hidden"
-        }
-      >
-        <nav className="activity-rail" aria-label="Activity rail">
-          <button
-            className={`activity-button${
-              appearance.preferences.sidebarVisible ? " is-active" : ""
-            }`}
-            type="button"
-            aria-label={
-              appearance.preferences.sidebarVisible
-                ? "Hide sidebar"
-                : "Show sidebar"
-            }
-            aria-pressed={appearance.preferences.sidebarVisible}
-            title="Toggle Explorer (Ctrl/Cmd+B)"
-            onClick={toggleSidebar}
-          >
-            <span aria-hidden="true">▱</span>
-          </button>
-          <button
-            className="activity-button"
-            type="button"
-            aria-label="Search — coming soon"
-            title="Search — coming soon"
-            disabled
-          >
-            <span aria-hidden="true">⌕</span>
-          </button>
-          <button
-            className="activity-button"
-            type="button"
-            aria-label="Outline — coming soon"
-            title="Outline — coming soon"
-            disabled
-          >
-            <span aria-hidden="true">☷</span>
-          </button>
-          <span className="activity-spacer" />
-          <button
-            ref={appearanceButtonRef}
-            className={`activity-button${appearanceOpen ? " is-active" : ""}`}
-            type="button"
-            aria-label="Appearance"
-            aria-pressed={appearanceOpen}
-            title="Appearance"
-            onClick={() => setAppearanceOpen((open) => !open)}
-          >
-            <span aria-hidden="true">⚙</span>
-          </button>
-        </nav>
+          {appearanceOpen ? (
+            <AppearancePanel appearance={appearance} onClose={closeAppearance} />
+          ) : null}
 
-        <WorkspaceExplorer
-          port={workspacePort}
-          hidden={!appearance.preferences.sidebarVisible}
-          onOpenFile={(path) => void documents.openPath(path)}
-        />
-
-        {appearanceOpen ? (
-          <AppearancePanel appearance={appearance} onClose={closeAppearance} />
-        ) : null}
-
-        <section className="document-area" aria-label="Document workspace">
+          <section className="document-area" aria-label="Document workspace">
           <TabStrip
             tabs={documents.state.tabs}
             activeId={documents.state.activeId}
@@ -213,6 +185,12 @@ export function App({
             onClose={closeDocument}
           />
           <header className="document-toolbar">
+            {!appearance.preferences.sidebarVisible ? (
+              <SidebarRevealButton
+                onClick={toggleSidebar}
+                buttonRef={sidebarRevealButtonRef}
+              />
+            ) : null}
             <div className="document-heading">
               <span className="document-eyebrow">Document</span>
               <strong>{activeDocument?.name ?? "No document open"}</strong>
@@ -312,8 +290,8 @@ export function App({
             <span className="status-spacer" />
             <span>{activeDocument ? "Markdown" : "Ready"}</span>
           </footer>
-        </section>
-      </div>
+          </section>
+        </div>
       </main>
     </AppIconStyleProvider>
   );
