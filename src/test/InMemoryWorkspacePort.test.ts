@@ -44,6 +44,7 @@ describe("InMemoryWorkspacePort", () => {
     await expect(port.readDocument("/vault/README.md")).resolves.toEqual({
       path: "/vault/README.md",
       source: "# Root",
+      lineEnding: "lf",
     });
     await expect(port.readDocument("/vault/missing.md")).rejects.toThrow(
       "Document not found: /vault/missing.md",

@@ -53,6 +53,8 @@ describe("WorkspaceExplorer", () => {
         return source.listDirectory(path);
       },
       readDocument: (path) => source.readDocument(path),
+      saveDocument: (request) => source.saveDocument(request),
+      watchDocument: (path, onChange) => source.watchDocument(path, onChange),
     };
 
     render(<WorkspaceExplorer port={port} onOpenFile={vi.fn()} />);

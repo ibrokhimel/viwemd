@@ -8,7 +8,7 @@ The foundation workspace is operational: choose a local folder, lazily browse su
 
 Supported filename extensions are `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`, and `.mdwn`, matched without case sensitivity.
 
-The current slice is deliberately read-only on disk. Editor changes stay in memory and are labeled as unsaved; no Save control or document-writing permission is enabled until atomic persistence, recovery snapshots, and conflict handling are implemented.
+Editor changes currently stay in memory and are labeled as unsaved because the Save/autosave UI lands in the next slice. The workspace boundary now has a tested atomic-write primitive: it compares fresh disk content, preserves LF or CRLF, writes a unique sibling temporary file, and renames only after that write succeeds. Nothing in the current interface invokes it yet.
 
 ## Development
 
@@ -49,3 +49,5 @@ cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
 Viwemd has no backend, account, telemetry, or cloud dependency. Markdown is treated as untrusted input: raw HTML is sanitized, generated heading IDs are collision-resistant, and the desktop content security policy blocks remote images and document scripts.
+
+Filesystem commands remain scoped by Tauri to the folder selected through the native dialog. The atomic persistence boundary adds only text-write, rename, and temporary-file cleanup commands; it does not grant a blanket home-directory scope.
