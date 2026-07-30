@@ -4,7 +4,7 @@ A local-first, cross-platform Markdown workspace and renderer built with Tauri, 
 
 ## Current status
 
-The foundation workspace is operational: choose a local folder, lazily browse supported Markdown files, open multiple tabs, edit with CodeMirror, render a sanitized GitHub-flavored Markdown preview, switch among single-pane, side-by-side, and stacked layouts, and personalize the interface with persistent appearance controls.
+The foundation workspace is operational: choose a local folder, browse its animated lazy-loading file tree, open multiple tabs, edit with CodeMirror, render a sanitized GitHub-flavored Markdown preview, switch among single-pane, side-by-side, and stacked layouts, and personalize the interface with persistent appearance controls.
 
 Supported filename extensions are `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`, and `.mdwn`, matched without case sensitivity.
 
@@ -31,6 +31,12 @@ Run the native desktop app:
 ```sh
 npm run tauri dev
 ```
+
+### UI component structure
+
+Viwemd uses TypeScript, Tailwind CSS through the Vite plugin, and a shadcn-compatible `components.json`. Reusable primitives live in `src/components/ui`, global styles live in `src/app/app.css`, and the `@/` alias resolves to `src/`. Keeping reusable UI in `src/components/ui` lets the shadcn CLI place and rewrite component imports consistently while feature folders remain focused on app behavior.
+
+The animated `FilesystemItem` primitive uses Lucide icons and Framer Motion. `WorkspaceExplorer` adapts real lazy-loaded local folder entries to that reusable component; the demo data is not bundled into the app, and no image assets are required.
 
 ## Workspace controls
 

@@ -1,4 +1,8 @@
 import type { ReactElement } from "react";
+import {
+  FilesystemItem,
+  type FilesystemNode,
+} from "@/components/ui/filesystem-item";
 import type { WorkspacePort } from "../../platform/workspace/WorkspacePort";
 import type { WorkspaceEntry } from "../../platform/workspace/types";
 import { useWorkspace, type WorkspaceController } from "./useWorkspace";
@@ -15,70 +19,56 @@ interface WorkspaceTreeProps {
   onOpenFile(path: string): void;
 }
 
+function toFilesystemNodes(
+  controller: WorkspaceController,
+  directoryPath: string,
+): FilesystemNode[] {
+  const entries = controller.entriesByDirectory[directoryPath] ?? [];
+
+  return entries.map((entry: WorkspaceEntry): FilesystemNode => {
+    if (entry.kind === "file") {
+      return entry;
+    }
+
+    const hasLoadedChildren = Object.hasOwn(
+      controller.entriesByDirectory,
+      entry.path,
+    );
+
+    return {
+      ...entry,
+      expanded: controller.expandedDirectories.has(entry.path),
+      nodes: hasLoadedChildren
+        ? toFilesystemNodes(controller, entry.path)
+        : undefined,
+    };
+  });
+}
+
 function WorkspaceTree({
   controller,
   directoryPath,
   onOpenFile,
 }: WorkspaceTreeProps): ReactElement {
-  const entries = controller.entriesByDirectory[directoryPath] ?? [];
+  const nodes = toFilesystemNodes(controller, directoryPath);
 
   return (
     <>
-      {entries.map((entry: WorkspaceEntry) => {
-        if (entry.kind === "file") {
-          return (
-            <div className="tree-item" role="treeitem" key={entry.path}>
-              <button
-                className="tree-row"
-                type="button"
-                aria-label={`Open ${entry.name}`}
-                title={entry.path}
-                onClick={() => onOpenFile(entry.path)}
-              >
-                <span className="tree-icon file-icon" aria-hidden="true">
-                  M
-                </span>
-                <span className="tree-name">{entry.name}</span>
-              </button>
-            </div>
-          );
-        }
-
-        const isExpanded = controller.expandedDirectories.has(entry.path);
-        return (
-          <div
-            className="tree-item"
-            role="treeitem"
-            aria-expanded={isExpanded}
-            key={entry.path}
-          >
-            <button
-              className="tree-row"
-              type="button"
-              aria-label={`${isExpanded ? "Collapse" : "Expand"} ${entry.name}`}
-              title={entry.path}
-              onClick={() => void controller.toggleDirectory(entry.path)}
-            >
-              <span className="tree-disclosure" aria-hidden="true">
-                {isExpanded ? "⌄" : "›"}
-              </span>
-              <span className="tree-icon folder-icon" aria-hidden="true">
-                ▰
-              </span>
-              <span className="tree-name">{entry.name}</span>
-            </button>
-            {isExpanded ? (
-              <div role="group">
-                <WorkspaceTree
-                  controller={controller}
-                  directoryPath={entry.path}
-                  onOpenFile={onOpenFile}
-                />
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
+      {nodes.map((node) => (
+        <FilesystemItem
+          node={node}
+          key={node.path}
+          animated
+          onToggle={(directory) =>
+            directory.path
+              ? controller.toggleDirectory(directory.path)
+              : undefined
+          }
+          onOpenFile={(file) => {
+            if (file.path) onOpenFile(file.path);
+          }}
+        />
+      ))}
     </>
   );
 }
@@ -113,7 +103,7 @@ export function WorkspaceExplorer({
           type="button"
           onClick={() => void workspace.chooseFolder()}
         >
-          <span aria-hidden="true">＋</span>
+          <span aria-hidden="true">+</span>
           Open folder
         </button>
       </header>
@@ -127,17 +117,23 @@ export function WorkspaceExplorer({
           {workspace.error}
         </p>
       ) : null}
-      <div className="workspace-tree" role="tree" aria-label="Markdown files">
-        {workspace.rootPath ? (
+      {workspace.rootPath ? (
+        <ul
+          className="workspace-tree"
+          role="tree"
+          aria-label="Markdown files"
+        >
           <WorkspaceTree
             controller={workspace}
             directoryPath={workspace.rootPath}
             onOpenFile={onOpenFile}
           />
-        ) : (
+        </ul>
+      ) : (
+        <div className="workspace-tree">
           <p className="sidebar-empty">Open a local folder to browse Markdown.</p>
-        )}
-      </div>
+        </div>
+      )}
     </aside>
   );
 }

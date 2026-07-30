@@ -17,7 +17,14 @@ describe("WorkspaceExplorer", () => {
     render(<WorkspaceExplorer port={port} onOpenFile={onOpenFile} />);
 
     await user.click(screen.getByRole("button", { name: "Open folder" }));
-    await user.click(screen.getByRole("button", { name: "Expand docs" }));
+    const docsToggle = screen.getByRole("button", { name: "Expand docs" });
+    expect(docsToggle.querySelectorAll("svg")).toHaveLength(2);
+    expect(docsToggle.closest('[role="treeitem"]')).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+
+    await user.click(docsToggle);
     await user.click(screen.getByRole("button", { name: "Open setup.md" }));
 
     expect(port.listedDirectories).toEqual(["/notes", "/notes/docs"]);
