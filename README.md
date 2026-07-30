@@ -8,7 +8,7 @@ The foundation workspace is operational: choose a local folder, lazily browse su
 
 Supported filename extensions are `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`, and `.mdwn`, matched without case sensitivity.
 
-Editor changes currently stay in memory and are labeled as unsaved because the Save/autosave UI lands in the next slice. The workspace boundary now has a tested atomic-write primitive: it compares fresh disk content, preserves LF or CRLF, writes a unique sibling temporary file, and renames only after that write succeeds. Nothing in the current interface invokes it yet.
+Editor changes autosave locally 750 ms after the last edit and can be saved immediately from the toolbar. Every save compares fresh disk content, preserves LF or CRLF, writes a unique sibling temporary file, and renames only after that write succeeds. External changes stop the write and offer explicit Reload disk or Overwrite disk choices; dirty tabs ask before discarding local edits. Crash-recovery snapshots and live filesystem watching land in the next persistence slices.
 
 ## Development
 
@@ -37,6 +37,8 @@ npm run tauri dev
 - Open a folder from the Explorer and select Markdown files to open tabs.
 - Use Edit or Preview for a single pane, or choose Side by side or Stacked.
 - Toggle the Explorer with its activity-rail button or `Ctrl+B` / `Cmd+B`.
+- Save immediately from the document toolbar or with `Ctrl+S` / `Cmd+S`; otherwise a dirty document autosaves after 750 ms.
+- If the file changed outside Viwemd, choose Reload disk to use that version or Overwrite disk to keep the editor version.
 - Open Appearance from the bottom of the activity rail to choose Light, Dark, or System theme; compact, comfortable, or spacious sidebar density; outline or solid icons; sans, serif, or mono document typography; and one of five named accent colors.
 - Appearance choices and sidebar visibility stay on this device under the versioned `viwemd.appearance.v1` preference. System theme follows live operating-system changes, and Reset appearance restores all defaults.
 

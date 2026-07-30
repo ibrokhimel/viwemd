@@ -12,6 +12,10 @@ const readme: OpenDocument = {
   source: "# Home",
   persistedSource: "# Home",
   lineEnding: "lf",
+  saveStatus: "clean",
+  saveError: null,
+  conflictSource: null,
+  conflictLineEnding: null,
   cursorOffset: 0,
   editorScrollTop: 0,
   previewScrollTop: 0,
@@ -66,6 +70,74 @@ describe("documentReducer", () => {
     expect(edited.tabs[0]).toMatchObject({
       source: "# Edited",
       persistedSource: "# Home",
+      saveStatus: "dirty",
+    });
+  });
+
+  it("tracks saves without losing an edit made while saving", () => {
+    const opened = documentReducer(initialDocumentState, {
+      type: "opened",
+      document: readme,
+    });
+    const edited = documentReducer(opened, {
+      type: "sourceChanged",
+      id: readme.id,
+      source: "# Edited",
+    });
+    const saving = documentReducer(edited, {
+      type: "saveStarted",
+      id: readme.id,
+    });
+    const editedAgain = documentReducer(saving, {
+      type: "sourceChanged",
+      id: readme.id,
+      source: "# Edited again",
+    });
+    const saved = documentReducer(editedAgain, {
+      type: "saveSucceeded",
+      id: readme.id,
+      savedSource: "# Edited",
+      lineEnding: "lf",
+    });
+
+    expect(saving.tabs[0].saveStatus).toBe("saving");
+    expect(saved.tabs[0]).toMatchObject({
+      source: "# Edited again",
+      persistedSource: "# Edited",
+      saveStatus: "dirty",
+    });
+  });
+
+  it("preserves local text on conflict and can reload disk", () => {
+    const opened = documentReducer(initialDocumentState, {
+      type: "opened",
+      document: { ...readme, source: "# Mine", saveStatus: "dirty" },
+    });
+    const conflicted = documentReducer(opened, {
+      type: "saveConflicted",
+      id: readme.id,
+      diskSource: "# External",
+      lineEnding: "crlf",
+    });
+
+    expect(conflicted.tabs[0]).toMatchObject({
+      source: "# Mine",
+      persistedSource: "# Home",
+      saveStatus: "conflict",
+      conflictSource: "# External",
+      conflictLineEnding: "crlf",
+    });
+
+    const reloaded = documentReducer(conflicted, {
+      type: "diskReloaded",
+      id: readme.id,
+    });
+    expect(reloaded.tabs[0]).toMatchObject({
+      source: "# External",
+      persistedSource: "# External",
+      lineEnding: "crlf",
+      saveStatus: "clean",
+      conflictSource: null,
     });
   });
 
