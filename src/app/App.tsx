@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 import { TabStrip } from "../features/documents/TabStrip";
 import { useDocuments } from "../features/documents/useDocuments";
+import { MarkdownEditor } from "../features/editor/MarkdownEditor";
+import { MarkdownPreview } from "../features/preview/MarkdownPreview";
 import { WorkspaceExplorer } from "../features/workspace/WorkspaceExplorer";
 import { tauriWorkspacePort } from "../platform/workspace/tauriWorkspacePort";
 import type { WorkspacePort } from "../platform/workspace/WorkspacePort";
@@ -41,13 +43,14 @@ export function App({
         {documents.error ? <p role="alert">{documents.error}</p> : null}
         {activeDocument ? (
           <>
-            <textarea
-              aria-label="Markdown source"
+            <MarkdownEditor
+              key={activeDocument.id}
               value={activeDocument.source}
-              onChange={(event) =>
-                documents.updateSource(activeDocument.id, event.target.value)
+              onChange={(source) =>
+                documents.updateSource(activeDocument.id, source)
               }
             />
+            <MarkdownPreview source={activeDocument.source} />
             {activeDocument.source !== activeDocument.persistedSource ? (
               <p>
                 Changes are kept in memory; durable saving is not enabled yet

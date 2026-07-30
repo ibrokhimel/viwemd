@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { InMemoryWorkspacePort } from "../test/InMemoryWorkspacePort";
@@ -32,15 +32,20 @@ describe("App", () => {
       "true",
     );
     const editor = screen.getByRole("textbox", { name: "Markdown source" });
-    expect(editor).toHaveValue("# Home");
+    expect(editor).toHaveTextContent("# Home");
+    const preview = screen.getByRole("article", { name: "Markdown preview" });
+    expect(within(preview).getByRole("heading", { name: "Home" })).toBeVisible();
 
-    await user.clear(editor);
-    await user.type(editor, "# Edited");
+    await user.click(editor);
+    await user.keyboard("{End}!");
 
     expect(
       screen.getByText(
         "Changes are kept in memory; durable saving is not enabled yet",
       ),
+    ).toBeVisible();
+    expect(
+      within(preview).getByRole("heading", { name: "Home!" }),
     ).toBeVisible();
   });
 });
