@@ -19,6 +19,7 @@ import {
 } from "../features/layout/layoutState";
 import { MarkdownPreview } from "../features/preview/MarkdownPreview";
 import { WorkspaceExplorer } from "../features/workspace/WorkspaceExplorer";
+import { AppIconStyleProvider } from "../components/ui/AppIconStyle";
 import { tauriWorkspacePort } from "../platform/workspace/tauriWorkspacePort";
 import type { WorkspacePort } from "../platform/workspace/WorkspacePort";
 import "./app.css";
@@ -121,7 +122,8 @@ export function App({
   );
 
   return (
-    <main className="app-shell">
+    <AppIconStyleProvider style={appearance.preferences.iconStyle}>
+      <main className="app-shell">
       <header className="titlebar">
         <div className="app-identity">
           <span className="app-mark" aria-hidden="true">
@@ -312,6 +314,7 @@ export function App({
           </footer>
         </section>
       </div>
-    </main>
+      </main>
+    </AppIconStyleProvider>
   );
 }

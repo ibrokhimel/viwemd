@@ -5,6 +5,7 @@ import {
   FilesystemItem,
   type FilesystemNode,
 } from "./filesystem-item";
+import { AppIconStyleProvider } from "./AppIconStyle";
 
 const docsNode: FilesystemNode = {
   kind: "directory",
@@ -83,5 +84,33 @@ describe("FilesystemItem", () => {
     expect(
       screen.getByRole("button", { name: "Expand Empty" }),
     ).toBeVisible();
+  });
+
+  it("uses the shared Phosphor weight preference", () => {
+    const { rerender } = render(
+      <AppIconStyleProvider style="outline">
+        <ul role="tree">
+          <FilesystemItem node={docsNode} />
+        </ul>
+      </AppIconStyleProvider>,
+    );
+
+    expect(screen.getByTestId("folder-icon-docs")).toHaveAttribute(
+      "data-icon-weight",
+      "regular",
+    );
+
+    rerender(
+      <AppIconStyleProvider style="solid">
+        <ul role="tree">
+          <FilesystemItem node={docsNode} />
+        </ul>
+      </AppIconStyleProvider>,
+    );
+
+    expect(screen.getByTestId("folder-icon-docs")).toHaveAttribute(
+      "data-icon-weight",
+      "bold",
+    );
   });
 });

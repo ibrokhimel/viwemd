@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, type ReactElement } from "react";
-import { ChevronRight, File, Folder } from "lucide-react";
+import { CaretRightIcon } from "@phosphor-icons/react/dist/csr/CaretRight";
+import { FileMdIcon } from "@phosphor-icons/react/dist/csr/FileMd";
+import { FolderIcon } from "@phosphor-icons/react/dist/csr/Folder";
 import { AnimatePresence, motion } from "framer-motion";
+import { useAppIconWeight } from "./AppIconStyle";
 
 export type FilesystemNode = {
   name: string;
@@ -33,6 +36,7 @@ export function FilesystemItem({
   const isDirectory = node.kind === "directory" || node.nodes !== undefined;
   const isControlled = typeof node.expanded === "boolean";
   const isOpen = isControlled ? (node.expanded ?? false) : localOpen;
+  const iconWeight = useAppIconWeight(isDirectory && isOpen);
 
   const toggleDirectory = (): void => {
     if (!isControlled) {
@@ -93,16 +97,25 @@ export function FilesystemItem({
               className="flex shrink-0"
               aria-hidden="true"
             >
-              <ChevronRight className="size-4 text-[color:var(--subtle)]" />
+              <CaretRightIcon
+                className="size-4 text-[color:var(--subtle)]"
+                weight={iconWeight}
+                data-icon-weight={iconWeight}
+              />
             </motion.span>
           ) : (
-            <ChevronRight
+            <CaretRightIcon
               className={`size-4 shrink-0 text-[color:var(--subtle)] transition-transform ${isOpen ? "rotate-90" : ""}`}
+              weight={iconWeight}
+              data-icon-weight={iconWeight}
               aria-hidden="true"
             />
           )}
-          <Folder
-            className="filesystem-folder-icon size-5 shrink-0 fill-sky-500 text-sky-500"
+          <FolderIcon
+            className="filesystem-folder-icon size-5 shrink-0 text-sky-500"
+            weight={iconWeight}
+            data-icon-weight={iconWeight}
+            data-testid={`folder-icon-${node.name}`}
             aria-hidden="true"
           />
           <span className="filesystem-name truncate">{node.name}</span>
@@ -115,8 +128,10 @@ export function FilesystemItem({
           title={node.path ?? node.name}
           onClick={() => onOpenFile?.(node)}
         >
-          <File
+          <FileMdIcon
             className="filesystem-file-icon ml-[22px] size-5 shrink-0 text-[color:var(--muted)]"
+            weight={iconWeight}
+            data-icon-weight={iconWeight}
             aria-hidden="true"
           />
           <span className="filesystem-name truncate">{node.name}</span>
