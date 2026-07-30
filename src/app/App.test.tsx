@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { InMemoryWorkspacePort } from "../test/InMemoryWorkspacePort";
 import { App } from "./App";
@@ -13,5 +14,33 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Viwemd" })).toBeVisible();
     expect(screen.getByText("Local Markdown workspace")).toBeVisible();
     expect(screen.getByRole("button", { name: "Open folder" })).toBeVisible();
+  });
+
+  it("opens a Markdown tab and keeps edits explicitly in memory", async () => {
+    const user = userEvent.setup();
+    const workspacePort = new InMemoryWorkspacePort("/notes", {
+      "/notes/README.md": "# Home",
+    });
+
+    render(<App workspacePort={workspacePort} />);
+
+    await user.click(screen.getByRole("button", { name: "Open folder" }));
+    await user.click(screen.getByRole("button", { name: "Open README.md" }));
+
+    expect(screen.getByRole("tab", { name: "README.md" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    const editor = screen.getByRole("textbox", { name: "Markdown source" });
+    expect(editor).toHaveValue("# Home");
+
+    await user.clear(editor);
+    await user.type(editor, "# Edited");
+
+    expect(
+      screen.getByText(
+        "Changes are kept in memory; durable saving is not enabled yet",
+      ),
+    ).toBeVisible();
   });
 });
