@@ -4,7 +4,11 @@ import { configDefaults, defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react()],
   clearScreen: false,
-  server: { port: 1420, strictPort: true },
+  server: {
+    port: 1420,
+    strictPort: true,
+    watch: { ignored: ["**/src-tauri/target/**"] },
+  },
   envPrefix: ["VITE_", "TAURI_ENV_*"],
   test: {
     environment: "jsdom",
