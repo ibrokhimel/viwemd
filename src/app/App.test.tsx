@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InMemoryWorkspacePort } from "../test/InMemoryWorkspacePort";
 import { App } from "./App";
 
@@ -49,19 +49,25 @@ describe("App", () => {
 
     expect(
       screen.getByText(
-        "Changes are kept in memory; durable saving is not enabled yet",
+        "Unsaved changes will autosave locally",
       ),
     ).toBeVisible();
     expect(
       within(preview).getByRole("heading", { name: "Home!" }),
     ).toBeVisible();
 
+    await user.click(screen.getByRole("button", { name: "Save README.md" }));
+    await waitFor(() =>
+      expect(workspacePort.getFileSource("/notes/README.md")).toBe("# Home!"),
+    );
+    expect(screen.getByText("Saved locally")).toBeVisible();
+
     await user.click(screen.getByRole("button", { name: "Stacked" }));
     expect(screen.getByTestId("document-workspace")).toHaveAttribute(
       "data-layout",
       "stacked",
     );
-    expect(screen.getByText("Unsaved in-memory changes")).toBeVisible();
+    expect(screen.getByText("Saved locally")).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Preview" }));
     expect(screen.queryByLabelText("Markdown source")).not.toBeInTheDocument();
@@ -92,6 +98,62 @@ describe("App", () => {
     expect(
       screen.getByRole("button", { name: "Open README.md" }),
     ).toBeVisible();
+  });
+
+  it("surfaces disk conflicts and reloads without silently overwriting", async () => {
+    const user = userEvent.setup();
+    const workspacePort = new InMemoryWorkspacePort("/notes", {
+      "/notes/README.md": "# Home\r\n",
+    });
+    render(<App workspacePort={workspacePort} />);
+
+    await user.click(screen.getByRole("button", { name: "Open folder" }));
+    await user.click(screen.getByRole("button", { name: "Open README.md" }));
+    await user.click(screen.getByRole("button", { name: "Side by side" }));
+    const editor = screen.getByRole("textbox", { name: "Markdown source" });
+    await user.click(editor);
+    await user.keyboard("{End} mine");
+    workspacePort.simulateExternalEdit("/notes/README.md", "# External\r\n");
+
+    await user.click(screen.getByRole("button", { name: "Save README.md" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "External changes detected",
+    );
+    expect(workspacePort.getFileSource("/notes/README.md")).toBe(
+      "# External\r\n",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Reload disk" }));
+    const preview = screen.getByRole("article", { name: "Markdown preview" });
+    expect(
+      within(preview).getByRole("heading", { name: "External" }),
+    ).toBeVisible();
+  });
+
+  it("protects a dirty tab from accidental close", async () => {
+    const user = userEvent.setup();
+    const workspacePort = new InMemoryWorkspacePort("/notes", {
+      "/notes/README.md": "# Home",
+    });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(<App workspacePort={workspacePort} />);
+
+    await user.click(screen.getByRole("button", { name: "Open folder" }));
+    await user.click(screen.getByRole("button", { name: "Open README.md" }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const editor = screen.getByRole("textbox", { name: "Markdown source" });
+    await user.click(editor);
+    await user.keyboard("{End}!");
+    await user.click(screen.getByRole("button", { name: "Close README.md" }));
+
+    expect(confirm).toHaveBeenCalledWith(
+      "Close README.md and discard its unsaved changes?",
+    );
+    expect(screen.getByRole("tab", { name: /README.md/ })).toBeVisible();
+
+    confirm.mockReturnValue(true);
+    await user.click(screen.getByRole("button", { name: "Close README.md" }));
+    expect(screen.queryByRole("tab", { name: /README.md/ })).not.toBeInTheDocument();
   });
 
   it("persists appearance choices and shares sidebar visibility", async () => {

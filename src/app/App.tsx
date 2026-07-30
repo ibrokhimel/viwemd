@@ -9,6 +9,7 @@ import {
 import { AppearancePanel } from "../features/appearance/AppearancePanel";
 import { useAppearance } from "../features/appearance/useAppearance";
 import { TabStrip } from "../features/documents/TabStrip";
+import { ConflictNotice } from "../features/documents/ConflictNotice";
 import { useDocuments } from "../features/documents/useDocuments";
 import { MarkdownEditor } from "../features/editor/MarkdownEditor";
 import { LayoutControls } from "../features/layout/LayoutControls";
@@ -71,6 +72,53 @@ export function App({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
+
+  useEffect(() => {
+    function handleSaveShortcut(event: KeyboardEvent) {
+      const hasOnePrimaryModifier = event.ctrlKey !== event.metaKey;
+      if (
+        event.key.toLowerCase() === "s" &&
+        hasOnePrimaryModifier &&
+        !event.altKey &&
+        !event.shiftKey &&
+        activeDocument
+      ) {
+        event.preventDefault();
+        void documents.save(activeDocument.id);
+      }
+    }
+
+    window.addEventListener("keydown", handleSaveShortcut);
+    return () => window.removeEventListener("keydown", handleSaveShortcut);
+  }, [activeDocument, documents]);
+
+  const saveStatus = activeDocument
+    ? {
+        clean: "Saved on disk",
+        dirty: "Unsaved changes",
+        saving: "Saving…",
+        saved: "Saved locally",
+        conflict: "External conflict",
+        error: `Save failed: ${activeDocument.saveError ?? "Unknown error"}`,
+      }[activeDocument.saveStatus]
+    : null;
+
+  const closeDocument = useCallback(
+    (id: string) => {
+      const document = documents.state.tabs.find((tab) => tab.id === id);
+      if (
+        document &&
+        document.source !== document.persistedSource &&
+        !window.confirm(
+          `Close ${document.name} and discard its unsaved changes?`,
+        )
+      ) {
+        return;
+      }
+      documents.close(id);
+    },
+    [documents],
+  );
 
   return (
     <main className="app-shell">
@@ -160,26 +208,57 @@ export function App({
             tabs={documents.state.tabs}
             activeId={documents.state.activeId}
             onActivate={documents.activate}
-            onClose={documents.close}
+            onClose={closeDocument}
           />
           <header className="document-toolbar">
             <div className="document-heading">
               <span className="document-eyebrow">Document</span>
               <strong>{activeDocument?.name ?? "No document open"}</strong>
             </div>
-            <LayoutControls
-              layout={layoutState.layout}
-              singlePane={layoutState.singlePane}
-              onLayoutChange={(value) =>
-                dispatchLayout({ type: "layoutChanged", value })
-              }
-              onSinglePaneChange={(value) =>
-                dispatchLayout({ type: "singlePaneChanged", value })
-              }
-            />
+            <div className="document-actions">
+              <button
+                className="save-button"
+                type="button"
+                aria-label={
+                  activeDocument
+                    ? `Save ${activeDocument.name}`
+                    : "Save document"
+                }
+                disabled={
+                  !activeDocument ||
+                  !isDirty ||
+                  activeDocument.saveStatus === "saving" ||
+                  activeDocument.saveStatus === "conflict"
+                }
+                onClick={() =>
+                  activeDocument && void documents.save(activeDocument.id)
+                }
+              >
+                <span aria-hidden="true">⌘</span>
+                {activeDocument?.saveStatus === "saving" ? "Saving…" : "Save"}
+              </button>
+              <LayoutControls
+                layout={layoutState.layout}
+                singlePane={layoutState.singlePane}
+                onLayoutChange={(value) =>
+                  dispatchLayout({ type: "layoutChanged", value })
+                }
+                onSinglePaneChange={(value) =>
+                  dispatchLayout({ type: "singlePaneChanged", value })
+                }
+              />
+            </div>
           </header>
 
           {documents.error ? <p role="alert">{documents.error}</p> : null}
+          {activeDocument?.saveStatus === "conflict" ? (
+            <ConflictNotice
+              onReload={() => documents.reloadDisk(activeDocument.id)}
+              onOverwrite={() =>
+                void documents.overwriteConflict(activeDocument.id)
+              }
+            />
+          ) : null}
           <div
             className="document-workspace"
             data-testid="document-workspace"
@@ -207,7 +286,7 @@ export function App({
                 ) : null}
                 {isDirty ? (
                   <p className="memory-notice">
-                    Changes are kept in memory; durable saving is not enabled yet
+                    Unsaved changes will autosave locally
                   </p>
                 ) : null}
               </>
@@ -227,7 +306,7 @@ export function App({
               <span className="status-dot" aria-hidden="true" />
               Local only
             </span>
-            {isDirty ? <span>Unsaved in-memory changes</span> : null}
+            {saveStatus ? <span>{saveStatus}</span> : null}
             <span className="status-spacer" />
             <span>{activeDocument ? "Markdown" : "Ready"}</span>
           </footer>

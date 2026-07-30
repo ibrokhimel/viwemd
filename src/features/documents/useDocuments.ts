@@ -1,4 +1,11 @@
-import { useCallback, useMemo, useReducer, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import type { WorkspacePort } from "../../platform/workspace/WorkspacePort";
 import {
   documentReducer,
@@ -15,6 +22,9 @@ export interface DocumentsController {
   activate(id: string): void;
   close(id: string): void;
   updateSource(id: string, source: string): void;
+  save(id: string, options?: { force?: boolean }): Promise<void>;
+  reloadDisk(id: string): void;
+  overwriteConflict(id: string): Promise<void>;
 }
 
 function filenameFromPath(path: string): string {
@@ -28,6 +38,12 @@ function getErrorMessage(error: unknown): string {
 export function useDocuments(port: WorkspacePort): DocumentsController {
   const [state, dispatch] = useReducer(documentReducer, initialDocumentState);
   const [error, setError] = useState<string | null>(null);
+  const stateRef = useRef(state);
+  const inFlight = useRef(new Set<string>());
+  const autosaveTimers = useRef(
+    new Map<string, { source: string; timer: ReturnType<typeof setTimeout> }>(),
+  );
+  stateRef.current = state;
 
   const openPath = useCallback(
     async (path: string) => {
@@ -49,6 +65,10 @@ export function useDocuments(port: WorkspacePort): DocumentsController {
             source: result.source,
             persistedSource: result.source,
             lineEnding: result.lineEnding,
+            saveStatus: "clean",
+            saveError: null,
+            conflictSource: null,
+            conflictLineEnding: null,
             cursorOffset: 0,
             editorScrollTop: 0,
             previewScrollTop: 0,
@@ -73,6 +93,106 @@ export function useDocuments(port: WorkspacePort): DocumentsController {
     dispatch({ type: "sourceChanged", id, source });
   }, []);
 
+  const save = useCallback(
+    async (id: string, options: { force?: boolean } = {}) => {
+      if (inFlight.current.has(id)) return;
+      const document = stateRef.current.tabs.find((tab) => tab.id === id);
+      if (!document || document.source === document.persistedSource) return;
+
+      inFlight.current.add(id);
+      const savedSource = document.source;
+      const lineEnding =
+        options.force && document.conflictLineEnding
+          ? document.conflictLineEnding
+          : document.lineEnding;
+      dispatch({ type: "saveStarted", id });
+      try {
+        const result = await port.saveDocument({
+          path: document.path,
+          source: savedSource,
+          expectedSource:
+            options.force && document.conflictSource !== null
+              ? document.conflictSource
+              : document.persistedSource,
+          lineEnding,
+          force: options.force,
+        });
+        if (result.status === "conflict") {
+          dispatch({
+            type: "saveConflicted",
+            id,
+            diskSource: result.diskSource,
+            lineEnding: result.lineEnding,
+          });
+        } else {
+          dispatch({
+            type: "saveSucceeded",
+            id,
+            savedSource: result.source,
+            lineEnding,
+          });
+        }
+      } catch (caught) {
+        dispatch({ type: "saveFailed", id, error: getErrorMessage(caught) });
+      } finally {
+        inFlight.current.delete(id);
+      }
+    },
+    [port],
+  );
+
+  const saveRef = useRef(save);
+  saveRef.current = save;
+
+  useEffect(() => {
+    const openIds = new Set(state.tabs.map((document) => document.id));
+    for (const [id, scheduled] of autosaveTimers.current) {
+      const document = state.tabs.find((tab) => tab.id === id);
+      if (
+        !openIds.has(id) ||
+        document?.saveStatus !== "dirty" ||
+        document.source !== scheduled.source
+      ) {
+        clearTimeout(scheduled.timer);
+        autosaveTimers.current.delete(id);
+      }
+    }
+
+    for (const document of state.tabs) {
+      if (
+        document.saveStatus !== "dirty" ||
+        autosaveTimers.current.has(document.id)
+      ) {
+        continue;
+      }
+      const source = document.source;
+      const timer = setTimeout(() => {
+        autosaveTimers.current.delete(document.id);
+        void saveRef.current(document.id);
+      }, 750);
+      autosaveTimers.current.set(document.id, { source, timer });
+    }
+  }, [state.tabs]);
+
+  useEffect(
+    () => () => {
+      for (const scheduled of autosaveTimers.current.values()) {
+        clearTimeout(scheduled.timer);
+      }
+      autosaveTimers.current.clear();
+    },
+    [],
+  );
+
+  const reloadDisk = useCallback((id: string) => {
+    dispatch({ type: "diskReloaded", id });
+  }, []);
+
+  const overwriteConflict = useCallback(
+    (id: string) => save(id, { force: true }),
+    [save],
+  );
+
   const activeDocument = useMemo(
     () => state.tabs.find((document) => document.id === state.activeId) ?? null,
     [state.activeId, state.tabs],
@@ -86,5 +206,8 @@ export function useDocuments(port: WorkspacePort): DocumentsController {
     activate,
     close,
     updateSource,
+    save,
+    reloadDisk,
+    overwriteConflict,
   };
 }

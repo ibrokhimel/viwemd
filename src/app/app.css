@@ -476,7 +476,7 @@ button:focus-visible,
   background: var(--surface);
 }
 
-.document-area > [role="alert"] {
+.document-area > p[role="alert"] {
   position: absolute;
   z-index: 10;
   right: 18px;
@@ -580,6 +580,39 @@ button:focus-visible,
   font-size: 0.76rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.document-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-button {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.save-button:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.save-button:disabled {
+  cursor: default;
+  opacity: 0.48;
 }
 
 .layout-controls,
@@ -871,6 +904,59 @@ button:focus-visible,
   color: var(--muted);
   font-size: 0.67rem;
   backdrop-filter: blur(10px);
+}
+
+.conflict-notice {
+  position: absolute;
+  z-index: 12;
+  top: 98px;
+  right: 16px;
+  display: flex;
+  width: min(520px, calc(100% - 32px));
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 13px;
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--border));
+  border-radius: 10px;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+}
+
+.conflict-notice strong {
+  color: var(--danger);
+  font-size: 0.75rem;
+}
+
+.conflict-notice p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.conflict-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.conflict-actions button {
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.conflict-actions button:hover {
+  border-color: var(--accent);
+}
+
+.conflict-actions .danger-action {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  color: var(--danger);
 }
 
 .empty-document {
