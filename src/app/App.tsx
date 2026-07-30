@@ -1,4 +1,13 @@
-import { useEffect, useReducer, type ReactElement } from "react";
+import {
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import { AppearancePanel } from "../features/appearance/AppearancePanel";
+import { useAppearance } from "../features/appearance/useAppearance";
 import { TabStrip } from "../features/documents/TabStrip";
 import { useDocuments } from "../features/documents/useDocuments";
 import { MarkdownEditor } from "../features/editor/MarkdownEditor";
@@ -22,6 +31,10 @@ export function App({
 }: AppProps): ReactElement {
   const documents = useDocuments(workspacePort);
   const activeDocument = documents.activeDocument;
+  const appearance = useAppearance();
+  const toggleSidebar = appearance.toggleSidebar;
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const appearanceButtonRef = useRef<HTMLButtonElement>(null);
   const [layoutState, dispatchLayout] = useReducer(
     layoutReducer,
     initialLayoutState,
@@ -36,6 +49,11 @@ export function App({
     activeDocument !== null &&
     (layoutState.layout !== "single" || layoutState.singlePane === "preview");
 
+  const closeAppearance = useCallback(() => {
+    setAppearanceOpen(false);
+    appearanceButtonRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const hasOnePrimaryModifier = event.ctrlKey !== event.metaKey;
@@ -46,13 +64,13 @@ export function App({
         !event.shiftKey
       ) {
         event.preventDefault();
-        dispatchLayout({ type: "sidebarToggled" });
+        toggleSidebar();
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [toggleSidebar]);
 
   return (
     <main className="app-shell">
@@ -74,16 +92,24 @@ export function App({
 
       <div
         className="app-body"
-        data-sidebar={layoutState.sidebarVisible ? "visible" : "hidden"}
+        data-sidebar={
+          appearance.preferences.sidebarVisible ? "visible" : "hidden"
+        }
       >
         <nav className="activity-rail" aria-label="Activity rail">
           <button
-            className={`activity-button${layoutState.sidebarVisible ? " is-active" : ""}`}
+            className={`activity-button${
+              appearance.preferences.sidebarVisible ? " is-active" : ""
+            }`}
             type="button"
-            aria-label={layoutState.sidebarVisible ? "Hide sidebar" : "Show sidebar"}
-            aria-pressed={layoutState.sidebarVisible}
+            aria-label={
+              appearance.preferences.sidebarVisible
+                ? "Hide sidebar"
+                : "Show sidebar"
+            }
+            aria-pressed={appearance.preferences.sidebarVisible}
             title="Toggle Explorer (Ctrl/Cmd+B)"
-            onClick={() => dispatchLayout({ type: "sidebarToggled" })}
+            onClick={toggleSidebar}
           >
             <span aria-hidden="true">▱</span>
           </button>
@@ -107,11 +133,13 @@ export function App({
           </button>
           <span className="activity-spacer" />
           <button
-            className="activity-button"
+            ref={appearanceButtonRef}
+            className={`activity-button${appearanceOpen ? " is-active" : ""}`}
             type="button"
-            aria-label="Appearance — coming soon"
-            title="Appearance — coming soon"
-            disabled
+            aria-label="Appearance"
+            aria-pressed={appearanceOpen}
+            title="Appearance"
+            onClick={() => setAppearanceOpen((open) => !open)}
           >
             <span aria-hidden="true">⚙</span>
           </button>
@@ -119,9 +147,13 @@ export function App({
 
         <WorkspaceExplorer
           port={workspacePort}
-          hidden={!layoutState.sidebarVisible}
+          hidden={!appearance.preferences.sidebarVisible}
           onOpenFile={(path) => void documents.openPath(path)}
         />
+
+        {appearanceOpen ? (
+          <AppearancePanel appearance={appearance} onClose={closeAppearance} />
+        ) : null}
 
         <section className="document-area" aria-label="Document workspace">
           <TabStrip

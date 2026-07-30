@@ -6,7 +6,6 @@ describe("layoutReducer", () => {
     expect(initialLayoutState).toEqual({
       layout: "single",
       singlePane: "preview",
-      sidebarVisible: true,
     });
   });
 
@@ -36,13 +35,6 @@ describe("layoutReducer", () => {
     expect(
       layoutReducer(split, { type: "singlePaneChanged", value: "edit" }),
     ).toMatchObject({ layout: "single", singlePane: "edit" });
-  });
-
-  it("toggles sidebar visibility", () => {
-    expect(
-      layoutReducer(initialLayoutState, { type: "sidebarToggled" })
-        .sidebarVisible,
-    ).toBe(false);
   });
 
   it("preserves identity when a selected layout is selected again", () => {

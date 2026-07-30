@@ -4,18 +4,15 @@ export type SinglePaneMode = "edit" | "preview";
 export interface LayoutState {
   layout: LayoutMode;
   singlePane: SinglePaneMode;
-  sidebarVisible: boolean;
 }
 
 export type LayoutAction =
   | { type: "layoutChanged"; value: LayoutMode }
-  | { type: "singlePaneChanged"; value: SinglePaneMode }
-  | { type: "sidebarToggled" };
+  | { type: "singlePaneChanged"; value: SinglePaneMode };
 
 export const initialLayoutState: LayoutState = {
   layout: "single",
   singlePane: "preview",
-  sidebarVisible: true,
 };
 
 export function layoutReducer(
@@ -32,8 +29,5 @@ export function layoutReducer(
       return state.layout === "single" && state.singlePane === action.value
         ? state
         : { ...state, layout: "single", singlePane: action.value };
-
-    case "sidebarToggled":
-      return { ...state, sidebarVisible: !state.sidebarVisible };
   }
 }
