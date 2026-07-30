@@ -80,10 +80,7 @@ export function WorkspaceExplorer({
 }: WorkspaceExplorerProps): ReactElement {
   const workspace = useWorkspace(port);
   const iconWeight = useAppIconWeight();
-  const rootName = workspace.rootPath
-    ?.split(/[\\/]/)
-    .filter(Boolean)
-    .at(-1);
+  const rootName = workspace.rootPath?.split(/[\\/]/).filter(Boolean).at(-1);
 
   return (
     <section
@@ -93,7 +90,7 @@ export function WorkspaceExplorer({
     >
       <header className="sidebar-header">
         <div>
-          <span className="sidebar-eyebrow">Explorer</span>
+          <span className="sidebar-eyebrow">Current folder</span>
           <strong title={workspace.rootPath ?? undefined}>
             {rootName ?? "No folder open"}
           </strong>
@@ -118,11 +115,7 @@ export function WorkspaceExplorer({
         </p>
       ) : null}
       {workspace.rootPath ? (
-        <ul
-          className="workspace-tree"
-          role="tree"
-          aria-label="Markdown files"
-        >
+        <ul className="workspace-tree" role="tree" aria-label="Markdown files">
           <WorkspaceTree
             controller={workspace}
             directoryPath={workspace.rootPath}
@@ -131,7 +124,9 @@ export function WorkspaceExplorer({
         </ul>
       ) : (
         <div className="workspace-tree">
-          <p className="sidebar-empty">Open a local folder to browse Markdown.</p>
+          <p className="sidebar-empty">
+            Open a local folder to browse Markdown.
+          </p>
         </div>
       )}
     </section>

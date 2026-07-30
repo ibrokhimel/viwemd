@@ -24,15 +24,33 @@ describe("AppearancePanel", () => {
     const onClose = vi.fn();
     render(<AppearancePanel appearance={appearance} onClose={onClose} />);
 
+    expect(screen.getByRole("dialog", { name: "Appearance" })).toHaveAttribute(
+      "aria-modal",
+      "true",
+    );
     expect(
-      screen.getByRole("complementary", { name: "Appearance" }),
-    ).toBeVisible();
+      screen
+        .getByRole("button", { name: "Close appearance" })
+        .querySelector("svg"),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "Reset appearance" })
+        .querySelector("svg"),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("radio", { name: "System" })
+        .parentElement?.querySelector("svg"),
+    ).not.toBeNull();
     expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Comfortable" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Outline" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Sans" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Violet" })).toBeChecked();
-    expect(screen.getByRole("checkbox", { name: "Show sidebar" })).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Show sidebar" }),
+    ).toBeChecked();
 
     await user.click(screen.getByRole("radio", { name: "Dark" }));
     await user.click(screen.getByRole("radio", { name: "Compact" }));
@@ -51,6 +69,34 @@ describe("AppearancePanel", () => {
     await user.click(screen.getByRole("button", { name: "Reset appearance" }));
     await user.click(screen.getByRole("button", { name: "Close appearance" }));
     expect(appearance.reset).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("blocks the workspace and keeps keyboard focus inside the dialog", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const { container } = render(
+      <AppearancePanel appearance={createAppearance()} onClose={onClose} />,
+    );
+
+    const closeButton = screen.getByRole("button", {
+      name: "Close appearance",
+    });
+    const resetButton = screen.getByRole("button", {
+      name: "Reset appearance",
+    });
+
+    resetButton.focus();
+    await user.tab();
+    expect(closeButton).toHaveFocus();
+
+    closeButton.focus();
+    await user.tab({ shift: true });
+    expect(resetButton).toHaveFocus();
+
+    const backdrop = container.querySelector(".appearance-backdrop");
+    expect(backdrop).not.toBeNull();
+    await user.click(backdrop as Element);
     expect(onClose).toHaveBeenCalledOnce();
   });
 
