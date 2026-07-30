@@ -181,6 +181,11 @@ describe("App", () => {
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");
     expect(document.documentElement).toHaveAttribute("data-density", "compact");
     expect(document.documentElement).toHaveAttribute("data-icon-style", "solid");
+    expect(
+      screen
+        .getByRole("button", { name: "Open README.md" })
+        .querySelector("svg"),
+    ).toHaveAttribute("data-icon-weight", "bold");
     expect(document.documentElement).toHaveAttribute("data-typography", "serif");
     expect(document.documentElement.style.getPropertyValue("--accent")).toBe(
       "#2563eb",
