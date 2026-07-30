@@ -13,6 +13,9 @@ describe("App", () => {
     render(<App workspacePort={workspacePort} />);
 
     expect(screen.getByRole("main")).toBeVisible();
+    expect(
+      screen.getByRole("banner", { name: "Document header" }),
+    ).toBeVisible();
     expect(screen.getByRole("heading", { name: "Viwemd" })).toBeVisible();
     expect(screen.getByText("Local workspace")).toBeVisible();
     expect(
@@ -25,6 +28,14 @@ describe("App", () => {
       screen.queryByRole("navigation", { name: "Activity rail" }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open folder" })).toBeVisible();
+    expect(
+      screen.getByTestId("empty-mark").querySelector("svg"),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("contentinfo", { name: "Document status" })
+        .querySelector("svg"),
+    ).not.toBeNull();
   });
 
   it("switches layouts, previews live edits, and toggles the sidebar", async () => {
@@ -43,7 +54,9 @@ describe("App", () => {
       "true",
     );
     const preview = screen.getByRole("article", { name: "Markdown preview" });
-    expect(within(preview).getByRole("heading", { name: "Home" })).toBeVisible();
+    expect(
+      within(preview).getByRole("heading", { name: "Home" }),
+    ).toBeVisible();
     expect(
       screen.queryByRole("textbox", { name: "Markdown source" }),
     ).not.toBeInTheDocument();
@@ -57,9 +70,7 @@ describe("App", () => {
     await user.keyboard("{End}!");
 
     expect(
-      screen.getByText(
-        "Unsaved changes will autosave locally",
-      ),
+      screen.getByText("Unsaved changes will autosave locally"),
     ).toBeVisible();
     expect(
       within(preview).getByRole("heading", { name: "Home!" }),
@@ -98,7 +109,12 @@ describe("App", () => {
     expect(
       screen.queryByRole("complementary", { name: "Viwemd sidebar" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Show sidebar" })).toBeVisible();
+    expect(
+      within(screen.getByRole("banner", { name: "Document header" })).getByRole(
+        "button",
+        { name: "Show sidebar" },
+      ),
+    ).toBeVisible();
     expect(screen.getByText("Local only")).toBeVisible();
 
     await user.keyboard("{Control>}b{/Control}");
@@ -163,7 +179,9 @@ describe("App", () => {
 
     confirm.mockReturnValue(true);
     await user.click(screen.getByRole("button", { name: "Close README.md" }));
-    expect(screen.queryByRole("tab", { name: /README.md/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: /README.md/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("persists appearance choices and shares sidebar visibility", async () => {
@@ -180,7 +198,9 @@ describe("App", () => {
     expect(
       screen.getByRole("complementary", { name: "Appearance" }),
     ).toBeVisible();
-    expect(screen.getByRole("button", { name: "Close appearance" })).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Close appearance" }),
+    ).toHaveFocus();
 
     await user.click(screen.getByRole("radio", { name: "Dark" }));
     await user.click(screen.getByRole("radio", { name: "Compact" }));
@@ -190,13 +210,19 @@ describe("App", () => {
 
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");
     expect(document.documentElement).toHaveAttribute("data-density", "compact");
-    expect(document.documentElement).toHaveAttribute("data-icon-style", "solid");
+    expect(document.documentElement).toHaveAttribute(
+      "data-icon-style",
+      "solid",
+    );
     expect(
       screen
         .getByRole("button", { name: "Open README.md" })
         .querySelector("svg"),
     ).toHaveAttribute("data-icon-weight", "bold");
-    expect(document.documentElement).toHaveAttribute("data-typography", "serif");
+    expect(document.documentElement).toHaveAttribute(
+      "data-typography",
+      "serif",
+    );
     expect(document.documentElement.style.getPropertyValue("--accent")).toBe(
       "#2563eb",
     );

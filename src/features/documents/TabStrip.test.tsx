@@ -51,7 +51,14 @@ describe("TabStrip", () => {
 
     expect(readmeTab).toHaveAttribute("aria-selected", "false");
     expect(setupTab).toHaveAttribute("aria-selected", "true");
-    expect(within(setupTab).getByText("Unsaved")).toHaveClass("visually-hidden");
+    expect(readmeTab.querySelector("svg")).toHaveAttribute(
+      "data-icon-weight",
+      "regular",
+    );
+    expect(closeSetup.querySelector("svg")).not.toBeNull();
+    expect(within(setupTab).getByText("Unsaved")).toHaveClass(
+      "visually-hidden",
+    );
     expect(setupTab).not.toContainElement(closeSetup);
     expect(setupTab.parentElement).toContainElement(closeSetup);
 

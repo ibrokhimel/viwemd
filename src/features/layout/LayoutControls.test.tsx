@@ -30,6 +30,12 @@ describe("LayoutControls", () => {
       "aria-pressed",
       "true",
     );
+    expect(
+      screen.getByRole("button", { name: "Preview" }).querySelector("svg"),
+    ).toHaveAttribute("data-icon-weight", "fill");
+    expect(
+      screen.getByRole("button", { name: "Side by side" }).querySelector("svg"),
+    ).toHaveAttribute("data-icon-weight", "regular");
 
     await user.click(screen.getByRole("button", { name: "Side by side" }));
     await user.click(screen.getByRole("button", { name: "Stacked" }));

@@ -5,15 +5,17 @@ import {
   useRef,
   useState,
   type ReactElement,
-  type Ref,
 } from "react";
+import { CheckCircleIcon } from "@phosphor-icons/react/dist/csr/CheckCircle";
+import { HardDriveIcon } from "@phosphor-icons/react/dist/csr/HardDrive";
+import { MarkdownLogoIcon } from "@phosphor-icons/react/dist/csr/MarkdownLogo";
 import { AppearancePanel } from "../features/appearance/AppearancePanel";
 import { useAppearance } from "../features/appearance/useAppearance";
-import { TabStrip } from "../features/documents/TabStrip";
 import { ConflictNotice } from "../features/documents/ConflictNotice";
+import { DocumentHeader } from "../features/documents/DocumentHeader";
+import { TabStrip } from "../features/documents/TabStrip";
 import { useDocuments } from "../features/documents/useDocuments";
 import { MarkdownEditor } from "../features/editor/MarkdownEditor";
-import { LayoutControls } from "../features/layout/LayoutControls";
 import {
   initialLayoutState,
   layoutReducer,
@@ -24,7 +26,6 @@ import {
   AppIconStyleProvider,
   useAppIconWeight,
 } from "../components/ui/AppIconStyle";
-import { SidebarSimpleIcon } from "@phosphor-icons/react/dist/csr/SidebarSimple";
 import { tauriWorkspacePort } from "../platform/workspace/tauriWorkspacePort";
 import type { WorkspacePort } from "../platform/workspace/WorkspacePort";
 import "./app.css";
@@ -33,26 +34,43 @@ interface AppProps {
   workspacePort?: WorkspacePort;
 }
 
-function SidebarRevealButton({
-  onClick,
-  buttonRef,
+function EmptyDocumentState(): ReactElement {
+  const iconWeight = useAppIconWeight(true);
+  return (
+    <div className="empty-document">
+      <span className="empty-mark" data-testid="empty-mark" aria-hidden="true">
+        <MarkdownLogoIcon weight={iconWeight} />
+      </span>
+      <h2>Open a Markdown file</h2>
+      <p>Choose a folder, then select a document from the Explorer.</p>
+    </div>
+  );
+}
+
+function DocumentStatus({
+  hasDocument,
 }: {
-  onClick(): void;
-  buttonRef?: Ref<HTMLButtonElement>;
+  hasDocument: boolean;
 }): ReactElement {
   const iconWeight = useAppIconWeight();
+  const activeIconWeight = useAppIconWeight(true);
 
   return (
-    <button
-      ref={buttonRef}
-      className="sidebar-reveal-button"
-      type="button"
-      aria-label="Show sidebar"
-      title="Show sidebar (Ctrl/Cmd+B)"
-      onClick={onClick}
+    <footer
+      className="status-bar"
+      aria-label="Document status"
+      aria-live="polite"
     >
-      <SidebarSimpleIcon weight={iconWeight} aria-hidden="true" />
-    </button>
+      <span>
+        <HardDriveIcon weight={iconWeight} aria-hidden="true" />
+        Local only
+      </span>
+      <span className="status-spacer" />
+      <span>
+        <CheckCircleIcon weight={activeIconWeight} aria-hidden="true" />
+        {hasDocument ? "Markdown" : "Ready"}
+      </span>
+    </footer>
   );
 }
 
@@ -174,122 +192,97 @@ export function App({
           />
 
           {appearanceOpen ? (
-            <AppearancePanel appearance={appearance} onClose={closeAppearance} />
+            <AppearancePanel
+              appearance={appearance}
+              onClose={closeAppearance}
+            />
           ) : null}
 
           <section className="document-area" aria-label="Document workspace">
-          <TabStrip
-            tabs={documents.state.tabs}
-            activeId={documents.state.activeId}
-            onActivate={documents.activate}
-            onClose={closeDocument}
-          />
-          <header className="document-toolbar">
-            {!appearance.preferences.sidebarVisible ? (
-              <SidebarRevealButton
-                onClick={toggleSidebar}
-                buttonRef={sidebarRevealButtonRef}
+            <DocumentHeader
+              documentName={activeDocument?.name ?? null}
+              saveLabel={saveStatus}
+              canSave={Boolean(
+                activeDocument &&
+                  isDirty &&
+                  activeDocument.saveStatus !== "saving" &&
+                  activeDocument.saveStatus !== "conflict",
+              )}
+              saving={activeDocument?.saveStatus === "saving"}
+              sidebarVisible={appearance.preferences.sidebarVisible}
+              layout={layoutState.layout}
+              singlePane={layoutState.singlePane}
+              onShowSidebar={toggleSidebar}
+              onSave={() =>
+                activeDocument && void documents.save(activeDocument.id)
+              }
+              onLayoutChange={(value) =>
+                dispatchLayout({ type: "layoutChanged", value })
+              }
+              onSinglePaneChange={(value) =>
+                dispatchLayout({ type: "singlePaneChanged", value })
+              }
+              sidebarButtonRef={sidebarRevealButtonRef}
+            />
+            <TabStrip
+              tabs={documents.state.tabs}
+              activeId={documents.state.activeId}
+              onActivate={documents.activate}
+              onClose={closeDocument}
+            />
+
+            {documents.error ? <p role="alert">{documents.error}</p> : null}
+            {activeDocument?.saveStatus === "conflict" ? (
+              <ConflictNotice
+                onReload={() => documents.reloadDisk(activeDocument.id)}
+                onOverwrite={() =>
+                  void documents.overwriteConflict(activeDocument.id)
+                }
               />
             ) : null}
-            <div className="document-heading">
-              <span className="document-eyebrow">Document</span>
-              <strong>{activeDocument?.name ?? "No document open"}</strong>
+            <div
+              className="document-workspace"
+              data-testid="document-workspace"
+              data-layout={layoutState.layout}
+            >
+              {activeDocument ? (
+                <>
+                  {showEditor ? (
+                    <section
+                      className="surface-pane editor-pane"
+                      aria-label="Editor pane"
+                    >
+                      <div className="pane-label">Markdown source</div>
+                      <MarkdownEditor
+                        key={activeDocument.id}
+                        value={activeDocument.source}
+                        onChange={(source) =>
+                          documents.updateSource(activeDocument.id, source)
+                        }
+                      />
+                    </section>
+                  ) : null}
+                  {showPreview ? (
+                    <section
+                      className="surface-pane preview-pane"
+                      aria-label="Preview pane"
+                    >
+                      <div className="pane-label">Preview</div>
+                      <MarkdownPreview source={activeDocument.source} />
+                    </section>
+                  ) : null}
+                  {isDirty ? (
+                    <p className="memory-notice">
+                      Unsaved changes will autosave locally
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <EmptyDocumentState />
+              )}
             </div>
-            <div className="document-actions">
-              <button
-                className="save-button"
-                type="button"
-                aria-label={
-                  activeDocument
-                    ? `Save ${activeDocument.name}`
-                    : "Save document"
-                }
-                disabled={
-                  !activeDocument ||
-                  !isDirty ||
-                  activeDocument.saveStatus === "saving" ||
-                  activeDocument.saveStatus === "conflict"
-                }
-                onClick={() =>
-                  activeDocument && void documents.save(activeDocument.id)
-                }
-              >
-                <span aria-hidden="true">⌘</span>
-                {activeDocument?.saveStatus === "saving" ? "Saving…" : "Save"}
-              </button>
-              <LayoutControls
-                layout={layoutState.layout}
-                singlePane={layoutState.singlePane}
-                onLayoutChange={(value) =>
-                  dispatchLayout({ type: "layoutChanged", value })
-                }
-                onSinglePaneChange={(value) =>
-                  dispatchLayout({ type: "singlePaneChanged", value })
-                }
-              />
-            </div>
-          </header>
 
-          {documents.error ? <p role="alert">{documents.error}</p> : null}
-          {activeDocument?.saveStatus === "conflict" ? (
-            <ConflictNotice
-              onReload={() => documents.reloadDisk(activeDocument.id)}
-              onOverwrite={() =>
-                void documents.overwriteConflict(activeDocument.id)
-              }
-            />
-          ) : null}
-          <div
-            className="document-workspace"
-            data-testid="document-workspace"
-            data-layout={layoutState.layout}
-          >
-            {activeDocument ? (
-              <>
-                {showEditor ? (
-                  <section className="surface-pane editor-pane" aria-label="Editor pane">
-                    <div className="pane-label">Markdown source</div>
-                    <MarkdownEditor
-                      key={activeDocument.id}
-                      value={activeDocument.source}
-                      onChange={(source) =>
-                        documents.updateSource(activeDocument.id, source)
-                      }
-                    />
-                  </section>
-                ) : null}
-                {showPreview ? (
-                  <section className="surface-pane preview-pane" aria-label="Preview pane">
-                    <div className="pane-label">Preview</div>
-                    <MarkdownPreview source={activeDocument.source} />
-                  </section>
-                ) : null}
-                {isDirty ? (
-                  <p className="memory-notice">
-                    Unsaved changes will autosave locally
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <div className="empty-document">
-                <span className="empty-mark" aria-hidden="true">
-                  M↓
-                </span>
-                <h2>Open a Markdown file</h2>
-                <p>Choose a folder, then select a document from the Explorer.</p>
-              </div>
-            )}
-          </div>
-
-          <footer className="status-bar" aria-label="Document status" aria-live="polite">
-            <span>
-              <span className="status-dot" aria-hidden="true" />
-              Local only
-            </span>
-            {saveStatus ? <span>{saveStatus}</span> : null}
-            <span className="status-spacer" />
-            <span>{activeDocument ? "Markdown" : "Ready"}</span>
-          </footer>
+            <DocumentStatus hasDocument={activeDocument !== null} />
           </section>
         </div>
       </main>

@@ -1,4 +1,7 @@
 import type { ReactElement } from "react";
+import { FileMdIcon } from "@phosphor-icons/react/dist/csr/FileMd";
+import { XIcon } from "@phosphor-icons/react/dist/csr/X";
+import { useAppIconWeight } from "../../components/ui/AppIconStyle";
 import type { OpenDocument } from "./documentState";
 
 interface TabStripProps {
@@ -14,6 +17,9 @@ export function TabStrip({
   onActivate,
   onClose,
 }: TabStripProps): ReactElement {
+  const iconWeight = useAppIconWeight();
+  const activeIconWeight = useAppIconWeight(true);
+
   return (
     <div className="tab-strip" role="tablist" aria-label="Open documents">
       {tabs.map((document) => {
@@ -28,12 +34,20 @@ export function TabStrip({
               aria-selected={document.id === activeId}
               onClick={() => onActivate(document.id)}
             >
-              <span>{document.name}</span>
+              <FileMdIcon
+                className="tab-file-icon"
+                weight={
+                  document.id === activeId ? activeIconWeight : iconWeight
+                }
+                data-icon-weight={
+                  document.id === activeId ? activeIconWeight : iconWeight
+                }
+                aria-hidden="true"
+              />
+              <span className="tab-label">{document.name}</span>
               {isDirty ? (
                 <>
-                  <span className="dirty-indicator" aria-hidden="true">
-                    ●
-                  </span>
+                  <span className="dirty-indicator" aria-hidden="true" />
                   <span className="visually-hidden">Unsaved</span>
                 </>
               ) : null}
@@ -44,7 +58,7 @@ export function TabStrip({
               aria-label={`Close ${document.name}`}
               onClick={() => onClose(document.id)}
             >
-              ×
+              <XIcon weight={iconWeight} aria-hidden="true" />
             </button>
           </div>
         );
